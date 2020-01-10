@@ -1,2 +1,2 @@
-# databse-ddl-transfer
+# database-ddl-transfer
 A Tool For Database DDL Transfer
