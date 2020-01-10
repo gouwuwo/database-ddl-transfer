@@ -22,7 +22,7 @@
 		<log4j2.version>2.11.1</log4j2.version>
 		<slf4j.version>1.7.25</slf4j.version>
 		<hadoop-common.version>2.6.5</hadoop-common.version>
-		<hive-jdbc.version>1.2.1</hive-jdbc.version>
+		<hive-jdbc.version>2.3.4</hive-jdbc.version>
 	</properties>
 
 	<dependencies>
