@@ -1,2 +1,2 @@
 # database-ddl-transfer
-A Tool For Database DDL Transfer
+A tool to transfer DDL between different database, including Mysql、PostgreSQL、Oracle、Hive and so on.
