@@ -144,8 +144,8 @@ public class PostgreSqlAnalyser extends Analyser {
 	@Override
 	protected List<Table> getTableDefines(Connection connection, String catalog, String schema) {
 		//  由于pg库9.0以下版本，不存在默认排序规则字段，所以不查询该值
-		String sql = "select a.tablename as table_name,c.description as table_comment from pg_tables a, pg_class b, pg_description c where " + 
-				"a.tablename = b.relname and b.oid = c.objoid and c.objsubid = '0' and a.tablename not like 'pg%' and a.tablename not like 'sql_%' and a.schemaname = 'public' order by a.tablename";
+		String sql = "select a.tablename as table_name,c.description as table_comment from pg_tables a, pg_class b left join pg_description c on b.oid = c.objoid and c.objsubid = '0' where " + 
+				"a.tablename = b.relname and a.tablename not like 'pg%' and a.tablename not like 'sql_%' and a.schemaname = 'public' order by a.tablename";
 		PreparedStatement preparedStatement = null;
 		ResultSet resultSet = null;
 		List<Table> tableList = new ArrayList<>();

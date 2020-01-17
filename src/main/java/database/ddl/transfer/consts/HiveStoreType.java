@@ -7,7 +7,7 @@ package database.ddl.transfer.consts;
  *@Version
  **/
 public class HiveStoreType {
-    public static final String TEXTFILE = "TEXTFILE";
+	public static final String TEXTFILE = "TEXTFILE";
     public static final String SEQUENCEFILE = "SEQUENCEFILE";
     public static final String RCFILE = "RCFILE";
     public static final String ORCFILE = "ORCFILE";

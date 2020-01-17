@@ -3,6 +3,9 @@ package database.ddl.transfer.factory.generate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import database.ddl.transfer.factory.generate.Generator;
+import database.ddl.transfer.factory.generate.GeneratorFactory;
+import database.ddl.transfer.factory.generate.impl.OracleSqlGenerator;
 import database.ddl.transfer.bean.DBSettings;
 import database.ddl.transfer.bean.DataBaseDefine;
 import database.ddl.transfer.factory.generate.impl.MySqlGenerator;
@@ -40,6 +43,8 @@ public final class GeneratorFactory {
 				generator = new MySqlGenerator(connection, dataBaseDefine, targetSettings);
 			} else if ("postgreSql".equalsIgnoreCase(dataBaseType)) {
 				generator = new PostgreSqlGenerator(connection, dataBaseDefine, targetSettings);
+			} else if ("oracle".equalsIgnoreCase(dataBaseType)) {
+				generator = new OracleSqlGenerator(connection, dataBaseDefine, targetSettings);
 			} else {
 				throw new IllegalArgumentException(String.format("无法识别的数据库类型：%s", dataBaseType));
 			}

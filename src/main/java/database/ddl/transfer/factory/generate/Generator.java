@@ -3,6 +3,7 @@ package database.ddl.transfer.factory.generate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import database.ddl.transfer.consts.DataBaseType;
 import database.ddl.transfer.bean.DBSettings;
 import database.ddl.transfer.bean.DataBaseDefine;
 import database.ddl.transfer.bean.Table;
@@ -58,17 +59,34 @@ public abstract class Generator {
 	 */
 	public void generateStructure() throws SQLException {
 		boolean createDataBase = this.createDataBase();
-		if (createDataBase || !sourceDataBaseDefine.getCatalog().equals(targetDBSettings.getDataBaseName())) {
-			// 创建了新库或则连接库和源库不一样，关闭原有连接，切换新连接
-			try {
-				connection.close();
-			} catch (Exception e) {
-				logger.error("由于创建了新库，需关闭原有库连接，出现异常", e);
+		if(!targetDBSettings.getDataBaseType().equals(DataBaseType.ORACLE)) {
+			if (createDataBase || !sourceDataBaseDefine.getCatalog().equals(targetDBSettings.getDataBaseName())) {
+				// 创建了新库或则连接库和源库不一样，关闭原有连接，切换新连接
+				try {
+					connection.close();
+				} catch (Exception e) {
+					logger.error("由于创建了新库，需关闭原有库连接，出现异常", e);
+				}
+				// 创建基于新库的连接
+				targetDBSettings.setDataBaseName(sourceDataBaseDefine.getCatalog());
+				String url = DBUrlUtil.generateDataBaseUrl(targetDBSettings);
+				connection = DriverManager.getConnection(url, targetDBSettings.getUserName(), targetDBSettings.getUserPassword());
 			}
-			// 创建基于新库的连接
-			targetDBSettings.setDataBaseName(sourceDataBaseDefine.getCatalog());
-			String url = DBUrlUtil.generateDataBaseUrl(targetDBSettings);
-			connection = DriverManager.getConnection(url, targetDBSettings.getUserName(), targetDBSettings.getUserPassword());
+		}else {
+			// Oracle数据库为用户名
+			if(createDataBase || !sourceDataBaseDefine.getCatalog().equals(targetDBSettings.getUserName())) {
+				// 创建了新库或则连接库和源库不一样，关闭原有连接，切换新连接
+				try {
+					connection.close();
+				} catch (Exception e) {
+					logger.error("由于创建了新库，需关闭原有库连接，出现异常", e);
+				}
+				// 创建基于新库的连接
+				targetDBSettings.setUserName(sourceDataBaseDefine.getCatalog());
+				targetDBSettings.setUserPassword(sourceDataBaseDefine.getCatalog());
+				String url = DBUrlUtil.generateDataBaseUrl(targetDBSettings);
+				connection = DriverManager.getConnection(url, targetDBSettings.getUserName(), targetDBSettings.getUserPassword());
+			}
 		}
 		this.createTable(sourceDataBaseDefine.getTablesMap().values());
 	}
@@ -112,7 +130,14 @@ public abstract class Generator {
 					String tableName = sourceTable.getTableName();
 					if(!targetTableNames.contains(tableName)) {
 						tableDDL = this.getTableDDL(sourceTable);
-						statement.execute(tableDDL);
+						if(targetDBSettings.getDataBaseType().equals(DataBaseType.ORACLE)) {
+							String[] sqls = tableDDL.split(";");
+							for (String singleSql : sqls) {
+								statement.execute(singleSql);
+							}
+						}else {
+							statement.execute(tableDDL);
+						}
 						logger.info("表{}创建成功", tableName);
 					}else {
 						modifiedColumnDDLList = this.getModifiedColumnDDL(sourceTable, targetDataBaseDefine.getTablesMap().get(tableName));

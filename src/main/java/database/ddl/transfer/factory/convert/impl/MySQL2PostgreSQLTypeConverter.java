@@ -1,8 +1,7 @@
 package database.ddl.transfer.factory.convert.impl;
 import database.ddl.transfer.bean.Column;
-import database.ddl.transfer.factory.convert.TypeConverter;
+import database.ddl.transfer.factory.convert.BaseTypeConverter;
 import java.util.Map;
-
 
 
 /**
@@ -10,7 +9,7 @@ import java.util.Map;
  *
  * @author gs
  */
-public class MySQL2PostgreSQLTypeConverter extends TypeConverter {
+public class MySQL2PostgreSQLTypeConverter extends BaseTypeConverter {
 
     public MySQL2PostgreSQLTypeConverter(Map<String, String> typeMapping,Map<String, String> typeProperties) {
         super(typeMapping,typeProperties);

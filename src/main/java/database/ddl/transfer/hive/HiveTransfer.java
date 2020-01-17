@@ -5,7 +5,12 @@ import database.ddl.transfer.bean.HiveTable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Connection;
+import database.ddl.transfer.bean.HiveConnectionProperty;
+import database.ddl.transfer.consts.HiveKeyWord;
+import database.ddl.transfer.hive.HiveExecutSql;
+import database.ddl.transfer.hive.HiveTransfer;
+
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,6 +23,7 @@ import java.util.List;
  **/
 public final class HiveTransfer {
     private static Logger logger = LoggerFactory.getLogger(HiveTransfer.class);
+    private static final String DEFAULT_DATABASE ="default";
     /**
        * @author luoyuntian
        * @date 2020-01-08 16:03
@@ -25,23 +31,106 @@ public final class HiveTransfer {
         * @param
        * @return
        */
-    public static  boolean transferAll(String sourceUrl,String sourceUserName,String sourcePassword,String targetUrl,String targetUserName,String targetPassword,String driver){
-        Connection sourceCon = HiveConnUtils.getHiveConnection(sourceUrl,driver,sourceUserName,sourcePassword);
-        Connection targetCon = HiveConnUtils.getHiveConnection(targetUrl,driver,targetUserName,targetPassword);
-        List<HiveDataBase> dataBases = getHiveDatabases(sourceCon);
+    public static  boolean transferAll(String sourceUrl,String sourceUserName,String sourcePassword,String targetUrl,String targetUserName,String targetPassword,String driver) throws SQLException {
+        HiveConnectionProperty sourceProperty = new HiveConnectionProperty(sourceUrl,sourceUserName,sourcePassword,driver);
+        HiveConnectionProperty targetProperty = new HiveConnectionProperty(targetUrl,targetUserName,targetPassword,driver);
+        List<HiveDataBase> dataBases = getHiveDatabases(sourceProperty);
         //创建库
-        createDatabases(targetCon,dataBases);
+        System.out.println("*************************************************");
+        System.out.println("创建库开始..");
+        createDatabases(targetProperty,dataBases);
+        System.out.println("*************************************************");
         //创建表
+        System.out.println("创建表开始..");
         for(HiveDataBase dataBase:dataBases){
-            List<HiveTable> tables = getHiveTables(sourceCon,dataBase);
-            createTables(targetCon,tables);
+            List<HiveTable> tables = getHiveTables(sourceProperty,dataBase);
+            createTables(targetProperty,tables);
             //加入分区
             for(HiveTable table:tables){
-                addPartition(targetCon,table);
+                System.out.println("创建"+table.getTableName()+"表的分区开始:");
+                addPartition(targetProperty,table);
             }
+        }
+        System.out.println("*************************************************");
+        return true;
+    }
+
+    /**
+       * @author luoyuntian
+       * @date 2020-01-15 15:02
+       * @description 增量数据，同步一个库下所有表的结构
+        * @param
+       * @return
+       */
+    public static boolean incrementByDatabase(String sourceUrl,String sourceUserName,String sourcePassword,String targetUrl,String targetUserName,String targetPassword,String driver,String databaseName) throws SQLException {
+        HiveConnectionProperty sourceProperty = new HiveConnectionProperty(sourceUrl,sourceUserName,sourcePassword,driver);
+        HiveConnectionProperty targetProperty = new HiveConnectionProperty(targetUrl,targetUserName,targetPassword,driver);
+        //复用全部导入的代码
+        List<HiveDataBase> dataBases =  new ArrayList<>();
+        HiveDataBase hiveDataBase = new HiveDataBase();
+        List<String> tableNames = HiveExecutSql.getTables(databaseName,sourceProperty);
+        hiveDataBase.setDataBaseName(databaseName);
+        hiveDataBase.setTables(tableNames);
+        dataBases.add(hiveDataBase);
+        //创建库
+        createDatabases(targetProperty,dataBases);
+        //创建表
+        List<HiveTable> tables = getHiveTables(sourceProperty,hiveDataBase);
+        createTables(targetProperty,tables);
+        //加入分区
+        for(HiveTable table:tables){
+            System.out.println("创建"+table.getTableName()+"表的分区开始:");
+            addPartition(targetProperty,table);
         }
         return true;
     }
+
+    /**
+       * @author luoyuntian
+       * @date 2020-01-15 15:20
+       * @description 增量数据，同步一个表的结构
+        * @param
+       * @return
+       */
+    public static boolean incrementByTable(String sourceUrl,String sourceUserName,String sourcePassword,String targetUrl,String targetUserName,String targetPassword,String driver,String databaseName,String tableName) throws SQLException {
+        HiveConnectionProperty sourceProperty = new HiveConnectionProperty(sourceUrl,sourceUserName,sourcePassword,driver);
+        HiveConnectionProperty targetProperty = new HiveConnectionProperty(targetUrl,targetUserName,targetPassword,driver);
+        //获取表信息
+        HiveTable table = new HiveTable();
+        String createDDL = HiveExecutSql.getHiveCreateDDL(databaseName,tableName,sourceProperty);
+        List<String> partitions = new ArrayList<>();
+        if(createDDL.contains(HiveKeyWord.PARTITIONED_BY)){
+            partitions = HiveExecutSql.getPartions(databaseName,tableName,sourceProperty);
+        }
+        table.setCreateTableDDL(createDDL);
+        table.setPartitions(partitions);
+        table.setTableName(tableName);
+        table.setDatabaseName(databaseName);
+        //创建表
+        String creatDDL =  HiveExecutSql.formatTableCreateDDL(table.getCreateTableDDL());
+        HiveExecutSql.createTable(table.getDatabaseName(),creatDDL,targetProperty);
+        //加入分区
+        addPartition(targetProperty,table);
+        return true;
+
+    }
+
+
+    /**
+       * @author luoyuntian
+       * @date 2020-01-15 15:28
+       * @description 增量数据，在目标hive表里新增一个分区
+        * @param
+       * @return
+       */
+    public static boolean incrementByPartition(String targetUrl,String targetUserName,String targetPassword,String driver,String databaseName,String tableName,String partition) throws SQLException {
+        HiveConnectionProperty targetProperty = new HiveConnectionProperty(targetUrl,targetUserName,targetPassword,driver);
+        //partition格式形如(sex ='f',class='20100503')从show parttion获取到的格式需要转换。
+        //String convertpartition = HiveExecutSql.convertPartition(partition);
+        HiveExecutSql.addPartition(databaseName,tableName,partition,targetProperty);
+        return true;
+    }
+
     /**
        * @author luoyuntian
        * @date 2020-01-08 16:07
@@ -49,12 +138,12 @@ public final class HiveTransfer {
         * @param
        * @return
        */
-    public static List<HiveDataBase> getHiveDatabases(Connection sourceCon){
+    private static List<HiveDataBase> getHiveDatabases(HiveConnectionProperty sourceProperty) throws SQLException {
         List<HiveDataBase> dataBases = new ArrayList<>();
-        List<String> databaseNames = HiveExecutSQL.getDatabases(sourceCon);
+        List<String> databaseNames = HiveExecutSql.getDatabases(sourceProperty);
         for(String databaseName: databaseNames){
             HiveDataBase hiveDataBase = new HiveDataBase();
-            List<String> tables = HiveExecutSQL.getTables(databaseName,sourceCon);
+            List<String> tables = HiveExecutSql.getTables(databaseName,sourceProperty);
             hiveDataBase.setDataBaseName(databaseName);
             hiveDataBase.setTables(tables);
             dataBases.add(hiveDataBase);
@@ -68,14 +157,17 @@ public final class HiveTransfer {
         * @param
        * @return
        */
-    public static List<HiveTable> getHiveTables(Connection sourceCon,HiveDataBase dataBase){
+    private static List<HiveTable> getHiveTables(HiveConnectionProperty sourceProperty,HiveDataBase dataBase) throws SQLException {
         List<HiveTable> tables = new ArrayList<>();
         List<String> tableNames = dataBase.getTables();
         String databaseName = dataBase.getDataBaseName();
         for(String tableName:tableNames){
             HiveTable table = new HiveTable();
-            List<String> partitions = HiveExecutSQL.getPartions(databaseName,tableName,sourceCon);
-            String creatDDL = HiveExecutSQL.getHiveCreateDDL(databaseName,tableName,sourceCon);
+            List<String> partitions = new ArrayList<>();
+            String creatDDL = HiveExecutSql.getHiveCreateDDL(databaseName,tableName,sourceProperty);
+            if(creatDDL.contains(HiveKeyWord.PARTITIONED_BY)){
+                 partitions = HiveExecutSql.getPartions(databaseName,tableName,sourceProperty);
+            }
             table.setCreateTableDDL(creatDDL);
             table.setPartitions(partitions);
             table.setTableName(tableName);
@@ -91,9 +183,12 @@ public final class HiveTransfer {
         * @param
        * @return
        */
-    public static boolean createDatabases(Connection targetCon,List<HiveDataBase> dataBases){
+    private static boolean createDatabases(HiveConnectionProperty targetProperty,List<HiveDataBase> dataBases) throws SQLException {
         for(HiveDataBase dataBase:dataBases){
-            HiveExecutSQL.createDatabase(dataBase.getDataBaseName(),targetCon);
+            if(!DEFAULT_DATABASE.equals(dataBase.getDataBaseName())) {
+                System.out.println("创建"+dataBase.getDataBaseName()+"库");
+                HiveExecutSql.createDatabase(dataBase.getDataBaseName(), targetProperty);
+            }
         }
         return true;
     }
@@ -105,10 +200,12 @@ public final class HiveTransfer {
         * @param
        * @return
        */
-    public static boolean createTables(Connection targetCon,List<HiveTable> tables){
+    private static boolean createTables(HiveConnectionProperty targetProperty,List<HiveTable> tables) throws SQLException {
         for(HiveTable table:tables){
-            String creatDDL =  HiveExecutSQL.formatTableCreateDDL(table.getCreateTableDDL());
-            HiveExecutSQL.createTable(table.getDatabaseName(),creatDDL,targetCon);
+            System.out.println("创建"+table.getTableName()+"表");
+            System.out.println("*************************************************");
+            String creatDDL =  HiveExecutSql.formatTableCreateDDL(table.getCreateTableDDL());
+            HiveExecutSql.createTable(table.getDatabaseName(),creatDDL,targetProperty);
         }
         return true;
     }
@@ -119,15 +216,14 @@ public final class HiveTransfer {
         * @param
        * @return
        */
-    public static boolean addPartition(Connection targetCon,HiveTable table){
+    private static boolean addPartition(HiveConnectionProperty targetProperty,HiveTable table) throws SQLException {
         String databaseName = table.getDatabaseName();
         String tableName = table.getTableName();
         List<String> partitions = table.getPartitions();
-        List<String> convertPartitons =  new ArrayList<>();
         for(String partition:partitions){
-            String convertpartition = HiveExecutSQL.convertPartition(partition);
-            convertPartitons.add(convertpartition);
-            HiveExecutSQL.addPartition(databaseName,tableName,partition,targetCon);
+            System.out.println("创建"+partition+"分区");
+            String convertpartition = HiveExecutSql.convertPartition(partition);
+            HiveExecutSql.addPartition(databaseName,tableName,convertpartition,targetProperty);
         }
         return true;
     }

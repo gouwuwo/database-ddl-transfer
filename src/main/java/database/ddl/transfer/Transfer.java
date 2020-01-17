@@ -3,6 +3,7 @@ package database.ddl.transfer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import database.ddl.transfer.hive.HiveTransfer;
 import database.ddl.transfer.bean.DBSettings;
 import database.ddl.transfer.bean.DataBaseDefine;
 import database.ddl.transfer.consts.DataBaseType;
@@ -99,7 +100,7 @@ public final class Transfer {
 		String databaseType = settingMap.get("target.database.type");
 		String userName = settingMap.get("target.user.name");
 		String password = settingMap.get("target.user.password");
-		
+
 		String url = DBUrlUtil.generateDataBaseUrl(databaseName, ip, port, databaseType);
 
 		return getConnection(driverClass, url, userName, password);
@@ -123,7 +124,7 @@ public final class Transfer {
 		String databaseType = settingMap.get("source.database.type");
 		String userName = settingMap.get("source.user.name");
 		String password = settingMap.get("source.user.password");
-		
+
 		String url = DBUrlUtil.generateDataBaseUrl(databaseName, ip, port, databaseType);
 
 		return getConnection(driverClass, url, userName, password);
@@ -151,7 +152,7 @@ public final class Transfer {
 	/**
 	 * 获取数据库连接
 	 * 
-	 * @param settings     数据库配置
+	 * @param settings 数据库配置
 	 * @return 数据库连接
 	 * @throws ClassNotFoundException
 	 * @throws IllegalAccessException
@@ -226,6 +227,54 @@ public final class Transfer {
 		} catch (Throwable e) {
 			throw e;
 		}
+	}
+
+	/**
+	 * @author luoyuntian
+	 * @date 2020-01-15 17:33
+	 * @description 将所有库结构导出导目标hive
+	 * @param
+	 * @return
+	 */
+	public static void hiveTransferAllDatabase(String sourceUrl, String sourceUserName, String sourcePassword, String targetUrl, String targetUserName, String targetPassword, String driver)
+			throws SQLException {
+		HiveTransfer.transferAll(sourceUrl, sourceUserName, sourcePassword, targetUrl, targetUserName, targetPassword, driver);
+	}
+
+	/**
+	 * @author luoyuntian
+	 * @date 2020-01-15 17:35
+	 * @description 增量，将单个库的结构导出目标hive
+	 * @param
+	 * @return
+	 */
+	public static void hiveTransferOneDatabase(String sourceUrl, String sourceUserName, String sourcePassword, String targetUrl, String targetUserName, String targetPassword, String driver,
+			String databaseName) throws SQLException {
+		HiveTransfer.incrementByDatabase(sourceUrl, sourceUserName, sourcePassword, targetUrl, targetUserName, targetPassword, driver, databaseName);
+	}
+
+	/**
+	 * @author luoyuntian
+	 * @date 2020-01-15 17:41
+	 * @description 增量，将单个表的结构导出导目标hive的某个库中
+	 * @param
+	 * @return
+	 */
+	public static void hiveTransferOneTable(String sourceUrl, String sourceUserName, String sourcePassword, String targetUrl, String targetUserName, String targetPassword, String driver,
+			String databaseName, String tableName) throws SQLException {
+		HiveTransfer.incrementByTable(sourceUrl, sourceUserName, sourcePassword, targetUrl, targetUserName, targetPassword, driver, databaseName, tableName);
+	}
+
+	/**
+	 * @author luoyuntian
+	 * @date 2020-01-15 17:43
+	 * @description 增量，将单个表的某个分区加到目标表中
+	 * @param
+	 * @return
+	 */
+	public static void hiveTransferOnePartition(String targetUrl, String targetUserName, String targetPassword, String driver, String databaseName, String tableName, String partition)
+			throws SQLException {
+		HiveTransfer.incrementByPartition(targetUrl, targetUserName, targetPassword, driver, databaseName, tableName, partition);
 	}
 
 }

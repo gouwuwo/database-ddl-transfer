@@ -1,5 +1,6 @@
 package database.ddl.transfer.bean;
 
+import database.ddl.transfer.bean.Column;
 import database.ddl.transfer.consts.DataBaseType;
 import database.ddl.transfer.utils.StringUtil;
 
@@ -71,8 +72,9 @@ public class Column {
 	private String extra;
 
 	/**
-	 * 字段约束策略 mysql:PRI主键约束/UNI唯一约束/MUL可以重复 postgresql:c = 检查约束, f = 外键约束, p = 主键约束,
-	 * u = 唯一约束, t = 约束触发器, x = 排除约束
+	 * 字段约束策略   mysql:PRI主键约束/UNI唯一约束/MUL可以重复；   postgresql:c = 检查约束, f = 外键约束, p = 主键约束,
+	 * u = 唯一约束, t = 约束触发器, x = 排除约束；  oracle:C = 检查约束，P = 主键约束，R = 外键约束，U = 唯一约束，
+	 * O = Read Only on a view，V = Check Option on a view
 	 */
 	private String columnKey;
 
@@ -371,7 +373,6 @@ public class Column {
 //			return false;
 		return true;
 	}
-	
 	
 
 }

@@ -1,7 +1,15 @@
+/*********************************************************************************
+ * Copyright (c)2020 CEC Health
+ * FILE: TypeConverter
+ * 版本      DATE             BY               REMARKS
+ * ----  -----------  ---------------  ------------------------------------------
+ * 1.0   2020-01-14        luoyuntian
+ ********************************************************************************/
 package database.ddl.transfer.factory.convert;
 
 import database.ddl.transfer.bean.DataBaseDefine;
 import database.ddl.transfer.bean.Table;
+import database.ddl.transfer.consts.DataBaseType;
 import database.ddl.transfer.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +25,7 @@ import java.util.Map;
  *
  * @author gs
  */
-public abstract class TypeConverter {
+public abstract class BaseTypeConverter {
 
 	protected Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
@@ -28,7 +36,7 @@ public abstract class TypeConverter {
 
 	protected Map<String, String> typeProperties;
 
-	public TypeConverter(Map<String, String> typeMapping, Map<String, String> typeProperties) {
+	public BaseTypeConverter(Map<String, String> typeMapping, Map<String, String> typeProperties) {
 		this.typeMapping = typeMapping;
 		this.typeProperties = typeProperties;
 	}
@@ -84,7 +92,11 @@ public abstract class TypeConverter {
 					}
 				} else {
 					// 未配置映射关系
-					column.setFinalConvertDataType("TEXT");
+					if(column.getDataBaseType().equals(DataBaseType.ORACLE)) {
+						column.setFinalConvertDataType("CLOB");
+					}else {
+						column.setFinalConvertDataType("TEXT");
+					}
 					logger.error(String.format("无法转换的的类型为：%s", column.getDataType()));
 				}
 				if(column.getFinalConvertDataType().contains("(")) {

@@ -3,6 +3,9 @@ package database.ddl.transfer.bean;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import database.ddl.transfer.bean.Table;
+import database.ddl.transfer.utils.StringUtil;
+
 /**
  * 数据库元素结构定义
  */
@@ -33,7 +36,11 @@ public class DataBaseDefine {
 	}
 
 	public void setCatalog(String catalog) {
-		this.catalog = catalog;
+		if(!StringUtil.isBlank(catalog)) {
+			this.catalog = catalog.toLowerCase();
+		}else {
+			this.catalog = catalog;
+		}
 	}
 
 	public String getCharacterSetDataBase() {

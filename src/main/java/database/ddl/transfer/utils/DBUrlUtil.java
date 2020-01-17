@@ -26,6 +26,9 @@ public class DBUrlUtil {
 			case POSTGRESQL:
 				sb.append("jdbc:postgresql://").append(settings.getIpAddress()).append(":").append(settings.getPort()).append("/").append(settings.getDataBaseName());
 				break;
+			case ORACLE:
+				sb.append("jdbc:oracle:thin:@").append(settings.getIpAddress()).append(":").append(settings.getPort()).append(":").append(settings.getDataBaseName());
+				break;
 			default:
 				break;
 		}
@@ -49,6 +52,9 @@ public class DBUrlUtil {
 				break;
 			case "POSTGRESQL":
 				sb.append("jdbc:postgresql://").append(ip).append(":").append(port).append("/").append(databaseName);
+				break;
+			case "ORACLE":
+				sb.append("jdbc:oracle:thin:@").append(ip).append(":").append(port).append(":").append(databaseName);
 				break;
 			default:
 				break;
