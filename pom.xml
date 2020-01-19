@@ -115,6 +115,12 @@
             <groupId>org.apache.hive</groupId>
             <artifactId>hive-jdbc</artifactId>
             <version>${hive-jdbc.version}</version>
+            <exclusions>
+            	<exclusion>
+            		<artifactId>jdk.tools</artifactId>
+            		<groupId>jdk.tools</groupId>
+            	</exclusion>
+            </exclusions>
         </dependency>
 
 	</dependencies>
