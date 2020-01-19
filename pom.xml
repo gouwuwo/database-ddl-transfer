@@ -19,12 +19,26 @@
 		<junit.version>4.11</junit.version>
 		<mysql.driver.version>8.0.14</mysql.driver.version>
 		<postgresql.driver.version>42.2.5</postgresql.driver.version>
-		<oracle.driver.version>11.2.0.4.0</oracle.driver.version>
+		<oracle.driver.version>12.1.0.2</oracle.driver.version>
 		<log4j2.version>2.11.1</log4j2.version>
 		<slf4j.version>1.7.25</slf4j.version>
 		<hadoop-common.version>2.6.5</hadoop-common.version>
 		<hive-jdbc.version>2.3.4</hive-jdbc.version>
 	</properties>
+	
+	<repositories>
+		<repository>
+			<id>HandChina RDC</id>
+			<url>http://nexus.saas.hand-china.com/content/repositories/rdc/</url>
+			<name>RDC</name>
+			<releases>  
+        		<enabled>true</enabled>  
+      		</releases>  
+      		<snapshots>  
+        		<enabled>false</enabled>  
+      		</snapshots>
+		</repository>
+	</repositories>
 
 	<dependencies>
 		<dependency>
@@ -39,12 +53,12 @@
 			<version>${postgresql.driver.version}</version>
 		</dependency>
 		
-		<!-- Oracle驱动包由于版权问题，需要自己下载驱动包，再导入本地仓库中 -->
 		<dependency>
-			<groupId>com.oracle</groupId>
-			<artifactId>ojdbc7</artifactId>
-			<version>${oracle.driver.version}</version>
+    		<groupId>com.oracle</groupId>
+    		<artifactId>ojdbc7</artifactId>
+    		<version>${oracle.driver.version}</version>
 		</dependency>
+		
 
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
