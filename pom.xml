@@ -14,7 +14,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
-		<fastjson-version>1.1.46.sec01</fastjson-version>
+		<fastjson-version>1.2.25</fastjson-version>
 
 		<junit.version>4.11</junit.version>
 		<mysql.driver.version>8.0.14</mysql.driver.version>
