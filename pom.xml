@@ -20,7 +20,7 @@
 		<mysql.driver.version>8.0.14</mysql.driver.version>
 		<postgresql.driver.version>42.2.5</postgresql.driver.version>
 		<oracle.driver.version>12.1.0.2</oracle.driver.version>
-		<log4j2.version>2.11.1</log4j2.version>
+		<log4j2.version>2.13.3</log4j2.version>
 		<slf4j.version>1.7.25</slf4j.version>
 		<hadoop-common.version>2.6.5</hadoop-common.version>
 		<hive-jdbc.version>2.3.4</hive-jdbc.version>
