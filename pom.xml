@@ -16,7 +16,7 @@
 		<maven.compiler.target>1.8</maven.compiler.target>
 		<fastjson-version>1.2.25</fastjson-version>
 
-		<junit.version>4.11</junit.version>
+		<junit.version>4.13.1</junit.version>
 		<mysql.driver.version>8.0.14</mysql.driver.version>
 		<postgresql.driver.version>42.2.5</postgresql.driver.version>
 		<oracle.driver.version>12.1.0.2</oracle.driver.version>
